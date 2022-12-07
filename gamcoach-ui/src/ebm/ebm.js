@@ -1,7 +1,7 @@
 /**
  * The EBM module.
  *
- * Author: Anonymous (anon@anon.anon)
+ * Author: Jay Wang (jayw@gatech.edu)
  * License: MIT
  */
 

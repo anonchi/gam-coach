@@ -1,7 +1,7 @@
 /**
  * The EBM sub-class designed for one single sample point
  *
- * Author: Anonymous (anon@anon.anon)
+ * Author: Jay Wang (jayw@gatech.edu)
  * License: MIT
  */
 

@@ -38,6 +38,8 @@
   import samplesCredit from '../../config/data/credit-classifier-random-samples.json';
   import samplesGerman from '../../config/data/german-classifier-random-samples.json';
   import samplesCompas from '../../config/data/compas-classifier-random-samples.json';
+  import samplesCrime from '../../config/data/crime-classifier-random-samples.json';
+  import samplesCrimeFull from '../../config/data/crime-full-classifier-random-samples.json';
 
   export let modelName = 'lc';
 
@@ -46,10 +48,11 @@
 
   const datasetOptions = [
     { name: 'lc', display: 'Lending Club' },
-    { name: 'credit', display: 'Credit' },
-    { name: 'german', display: 'German Credit' },
+    { name: 'crime', display: 'Communities & Crime' },
     { name: 'adult', display: 'Adult Census Income' },
-    { name: 'compas', display: 'COMPAS' }
+    { name: 'german', display: 'German Credit' },
+    { name: 'compas', display: 'COMPAS' },
+    { name: 'credit', display: 'Credit' }
   ];
 
   const initModelInfo = () => {
@@ -79,6 +82,16 @@
         curIndex = 380;
         break;
       }
+      case 'crime-full': {
+        curSamples = samplesCrimeFull;
+        curIndex = 347;
+        break;
+      }
+      case 'crime': {
+        curSamples = samplesCrime;
+        curIndex = 165;
+        break;
+      }
       default: {
         console.warn('Unknown model name');
         curSamples = samplesLC;
@@ -88,15 +101,37 @@
     }
   };
 
+  const getAgencyName = (modelName) => {
+    if (modelName === 'compas') {
+      return 'court';
+    } else if (modelName === 'crime-full' || modelName === 'crime') {
+      return 'funding agency';
+    } else {
+      return 'bank';
+    }
+  };
+
+  const getApplicantName = (modelName) => {
+    if (modelName === 'compas') {
+      return 'a bail applicant';
+    } else if (modelName === 'crime-full' || modelName === 'crime') {
+      return 'applying for grants for county';
+    } else {
+      return 'a loan applicant';
+    }
+  };
+
   // localhost:5005/?dataset=compas
   const urlParams = new URLSearchParams(window.location.search);
   const urlModelName = urlParams.get('dataset');
   const validModelNames = new Set([
-    'lc',
+    'lending',
     'adult',
     'credit',
     'german',
-    'compas'
+    'compas',
+    'crime',
+    'crime-full'
   ]);
   if (urlModelName !== null && validModelNames.has(urlModelName)) {
     modelName = urlModelName;
@@ -234,7 +269,7 @@
         <div class="arrow" />
         <div class="title-top">Imagine...</div>
         <div class="title">
-          You're {modelName === 'compas' ? 'bail' : 'loan'} applicant
+          You're {getApplicantName(modelName)}
         </div>
         <div class="input-number">
           <div
@@ -259,7 +294,7 @@
           <span class="line"> Your application is rejected </span>
           <div class="help-arrow">{@html pointArrowSVGProcessed}</div>
           <span class="line">
-            The {modelName === 'compas' ? 'court' : 'bank'} points you to
+            The {getAgencyName(modelName)} points you to
           </span>
           <span class="line">
             <strong>GAM Coach</strong> to help you
@@ -269,13 +304,38 @@
         {#if modelName === 'compas'}
           <div class="description">
             <span class="line" style="margin-top: 30px;">
-              *We would not like to use COMPAS to evaluate GAM Coach, this demo
-              is only to showcase GAM Coach's generalizability.
+              *We don't expect one to use COMPAS to evaluate GAM Coach; we use
+              it to demonstrate the generalizability of GAM Coach.
             </span>
-            <span class="line" style="margin-top: 10px;">
-              See <a href="https://arxiv.org/abs/2106.05498" target="_blank"
-                >this paper
-              </a> to learn more about COMPAS.
+          </div>
+        {:else if modelName === 'crime'}
+          <div class="description">
+            <span class="line" style="margin-top: 30px;">
+              *Before training this model, we removed sensitive features (e.g.,
+              Black Population) and features with many missing values.
+              <a
+                href="javascript:"
+                on:click={(e) =>
+                  optionClicked(e, {
+                    name: 'crime-full',
+                    display: 'Communities & Crime'
+                  })}>Try full model</a
+              >
+            </span>
+          </div>
+        {:else if modelName === 'crime-full'}
+          <div class="description">
+            <span class="line" style="margin-top: 30px;">
+              *This model was trained on sensitive features (e.g., Black
+              Population) and features with many missing values.
+              <a
+                href="javascript:"
+                on:click={(e) =>
+                  optionClicked(e, {
+                    name: 'crime',
+                    display: 'Communities & Crime'
+                  })}>Try sanitized model</a
+              >
             </span>
           </div>
         {/if}
@@ -303,7 +363,8 @@
         {#each datasetOptions as option, i}
           <div
             class="dataset-option"
-            class:selected={option.name === modelName}
+            class:selected={option.name === modelName ||
+              (option.name === 'crime' && modelName === 'crime-full')}
             on:click={(e) => optionClicked(e, option)}
           >
             <div class="dataset-place" />
@@ -379,7 +440,7 @@
             <th>Size</th>
             <th>Prediction</th>
             <th>Country</th>
-            <th>Papers</th>
+            <th>Recourse Papers</th>
           </tr>
         </thead>
         <tbody>
@@ -393,7 +454,7 @@
                 }}>Demo</a
               >
             </td>
-            <td>n = 124026, d = 20</td>
+            <td>n=12,4026<br />d=20</td>
             <td>Loan Default</td>
             <td>US, 2007–2018</td>
             <td
@@ -409,8 +470,9 @@
               ]</td
             >
           </tr>
+
           <tr>
-            <td>Credit</td>
+            <td>Communities & Crime</td>
             <td
               ><a
                 href="#top"
@@ -419,32 +481,20 @@
                 }}>Demo</a
               >
             </td>
-            <td>n = 29623, d = 14</td>
-            <td>Loan Default</td>
-            <td>Taiwan, 2005</td>
+            <td>n=1,994<br />d=120</td>
+            <td>Low Crime Risk</td>
+            <td>US, 1995</td>
             <td
               >[
               <a
-                href="https://proceedings.neurips.cc/paper/2020/hash/c2ba1bc54b239208cb37b901c0d3b363-Abstract.html"
-                target="_blank">2</a
-              >,
-              <a
-                href="https://dl.acm.org/doi/10.1145/3287560.3287566"
+                href="https://proceedings.neurips.cc/paper/2021/hash/009c434cab57de48a31f6b669e7ba266-Abstract.html"
                 target="_blank">3</a
-              >,
-              <a
-                href="https://proceedings.mlr.press/v108/karimi20a.html"
-                target="_blank">4</a
-              >,
-              <a
-                href="https://dl.acm.org/doi/10.14778/3461535.3461555"
-                target="_blank">5</a
-              >
-              ]</td
+              > ]</td
             >
           </tr>
+
           <tr>
-            <td>German Credit</td>
+            <td>Adult</td>
             <td
               ><a
                 href="#top"
@@ -453,7 +503,43 @@
                 }}>Demo</a
               >
             </td>
-            <td>n = 1000, d = 20</td>
+            <td>n=45,222<br />d=12</td>
+            <td>Income ≥ 50K</td>
+            <td>US, 1996</td>
+            <td
+              >[
+              <a
+                href="https://dl.acm.org/doi/abs/10.1145/3351095.3372850"
+                target="_blank">1</a
+              >,
+              <a
+                href="https://dl.acm.org/doi/10.1145/3287560.3287566"
+                target="_blank">4</a
+              >,
+              <a
+                href="https://proceedings.mlr.press/v108/karimi20a.html"
+                target="_blank">5</a
+              >,
+              <a
+                href="https://dl.acm.org/doi/10.14778/3461535.3461555"
+                target="_blank">6</a
+              >,
+              <a href="https://arxiv.org/abs/2106.02666" target="_blank">6</a>
+              ]</td
+            >
+          </tr>
+
+          <tr>
+            <td>German Credit</td>
+            <td
+              ><a
+                href="#top"
+                on:click={(e) => {
+                  optionClicked(e, datasetOptions[3]);
+                }}>Demo</a
+              >
+            </td>
+            <td>n=1,000<br />d=20</td>
             <td>Good Customer</td>
             <td>German, 1994</td>
             <td
@@ -469,50 +555,16 @@
               <a href="https://arxiv.org/abs/2106.02666" target="_blank">6</a>,
               <a
                 href="https://proceedings.neurips.cc/paper/2020/hash/8ee7730e97c67473a424ccfeff49ab20-Abstract.html"
-                target="_blank">7</a
+                target="_blank">8</a
               >,
               <a
                 href="https://dl.acm.org/doi/abs/10.1145/3442188.3445899"
-                target="_blank">8</a
+                target="_blank">9</a
               >
               ]</td
             >
           </tr>
-          <tr>
-            <td>Adult</td>
-            <td
-              ><a
-                href="#top"
-                on:click={(e) => {
-                  optionClicked(e, datasetOptions[3]);
-                }}>Demo</a
-              >
-            </td>
-            <td>n = 45222, d = 12</td>
-            <td>Income ≥ 50K</td>
-            <td>US, 1996</td>
-            <td
-              >[
-              <a
-                href="https://dl.acm.org/doi/abs/10.1145/3351095.3372850"
-                target="_blank">1</a
-              >,
-              <a
-                href="https://dl.acm.org/doi/10.1145/3287560.3287566"
-                target="_blank">3</a
-              >,
-              <a
-                href="https://proceedings.mlr.press/v108/karimi20a.html"
-                target="_blank">4</a
-              >,
-              <a
-                href="https://dl.acm.org/doi/10.14778/3461535.3461555"
-                target="_blank">5</a
-              >,
-              <a href="https://arxiv.org/abs/2106.02666" target="_blank">6</a>
-              ]</td
-            >
-          </tr>
+
           <tr>
             <td>COMPAS</td>
             <td
@@ -523,7 +575,7 @@
                 }}>Demo</a
               >
             </td>
-            <td>n = 5278, d = 5</td>
+            <td>n=5,278<br />d=5</td>
             <td>Recidivism in two years</td>
             <td>US, 2016</td>
             <td
@@ -534,11 +586,46 @@
               >,
               <a
                 href="https://proceedings.mlr.press/v108/karimi20a.html"
-                target="_blank">4</a
+                target="_blank">5</a
               >,
               <a
                 href="https://proceedings.neurips.cc/paper/2020/hash/8ee7730e97c67473a424ccfeff49ab20-Abstract.html"
-                target="_blank">7</a
+                target="_blank">8</a
+              >
+              ]</td
+            >
+          </tr>
+
+          <tr>
+            <td>Credit</td>
+            <td
+              ><a
+                href="#top"
+                on:click={(e) => {
+                  optionClicked(e, datasetOptions[5]);
+                }}>Demo</a
+              >
+            </td>
+            <td>n=29,623<br />d=14</td>
+            <td>Loan Default</td>
+            <td>Taiwan, 2005</td>
+            <td
+              >[
+              <a
+                href="https://proceedings.neurips.cc/paper/2020/hash/c2ba1bc54b239208cb37b901c0d3b363-Abstract.html"
+                target="_blank">2</a
+              >,
+              <a
+                href="https://dl.acm.org/doi/10.1145/3287560.3287566"
+                target="_blank">4</a
+              >,
+              <a
+                href="https://proceedings.mlr.press/v108/karimi20a.html"
+                target="_blank">5</a
+              >,
+              <a
+                href="https://dl.acm.org/doi/10.14778/3461535.3461555"
+                target="_blank">6</a
               >
               ]</td
             >

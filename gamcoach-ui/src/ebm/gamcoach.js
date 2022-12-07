@@ -1,7 +1,7 @@
 /**
  * The EBM module.
  *
- * Author: Anonymous (anon@anon.anon)
+ * Author: Jay Wang (jayw@gatech.edu)
  * License: MIT
  */
 
@@ -337,7 +337,7 @@ class EBM {
 /**
  * The EBM sub-class designed for one single sample point
  *
- * Author: Anonymous (anon@anon.anon)
+ * Author: Jay Wang (jayw@gatech.edu)
  * License: MIT
  */
 
@@ -2558,10 +2558,15 @@ class GAMCoach {
         }
       });
 
-      let contMean =
-        contDistances.reduce((a, b) => a + b) / contDistances.length;
-      let catMean = catDistances.reduce((a, b) => a + b) / catDistances.length;
-      categoricalWeight = contMean / catMean;
+      if (contDistances.length !== 0 && catDistances.length !== 0) {
+        let contMean =
+          contDistances.reduce((a, b) => a + b) / contDistances.length;
+        let catMean =
+          catDistances.reduce((a, b) => a + b) / catDistances.length;
+        categoricalWeight = contMean / catMean;
+      } else {
+        categoricalWeight = 1.0;
+      }
     }
 
     // Rescaling categorical options
